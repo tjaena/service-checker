@@ -10,45 +10,58 @@ set -e -o pipefail
 declare -A SERVICES
 SERVICES["b565600b-02b1-4a1f-9455-23dc918d2022"]="http://grey.dmz.local/portainer/"
 
-# send service responses
-#service_one_response=$(curl --write-out \\n%{http_code} --silent --output /dev/null http://grey.dmz.local/nzbget/)
-
 # function of checking service
 checkService() {
-	response=$(curl --write-out %{HTTP_CODE} --silent --output /dev/null $1)
-	if [ $HTTP_CODE = 200 ]; then
-		echo "200 OK"
-	else
-		echo "KO"
+    HTTP_RESPONSE=$(curl -fsS --retry 5 --write-out %{http_code} $1)
+
+    if [ "$HTTP_RESPONSE" == "200" ]; then
+		echo "checkService OK" $1
+		return 0
+    else
+		echo "checkService KO" $1
+		return 1
 	fi
 }
 
-# func goodPing(uuid) (
-# send ping
-# )
+startPing() {
+	# $1 should always be the uuid of the service
+	curl -fsS -m 10 --retry 5 "https://hc-ping.com/${1}/start"
+}
 
-# func badPing(uuid) (
-# send ping
-# )
+badPing() {
+	# $1 should always be the uuid of the service
+	# $2 should be the error code
+	if $2; then
+		echo "has $2"
+		curl -fsS -m 10 --retry 5 "https://hc-ping.com/${1}/${2}"
+		return 0
+	else
+		echo "has none"
+		curl -fsS -m 10 --retry 5 "https://hc-ping.com/${1}/1"
+		return 0
+}
 
-# func startPing(uuid) (
-# send ping
-# )
+goodPing() {
+	# $1 should always be the uuid of the service
+	curl -fsS -m 10 --retry 5 "https://hc-ping.com/${1}/0"
+	if curl -fsS -m 10 --retry 5 "https://hc-ping.com/${1}/0"; then
+		echo "curl successfull"
+		return 0
+	else
+		echo "curl error - none"
+		return 1
+}
 
 # iterate for each service id of array
 for UUID in ${!SERVICES[@]}; do
-	checkService($UUID)
-    echo ${UUID} ${SERVICES[${UUID}]}
+	startPing "${UUID}"
+	if checkService "${SERVICES[${UUID}]}"; then
+		goodPing "${UUID}"
+	else
+		badPing "${UUID}" "2"
+	fi
+	echo ${UUID} ${SERVICES[${UUID}]}
 done
-
-# # redundancy here
-# for service in services:
-# 	startPing(service.[0])
-# 	if (checkService(service.[1]) == true)
-# 		goodPing(service.[0])
-# 	else
-# 		badPing(service.[0])
-
 
 # # How many backups to keep.
 # RETENTION_DAYS=7
