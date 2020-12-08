@@ -36,9 +36,9 @@ checkService() {
 # )
 
 # iterate for each service id of array
-for uuid in ${!SERVICES[@]}; do
-	checkService(${uuid})
-    echo ${uuid} ${SERVICES[${uuid}]}
+for UUID in ${!SERVICES[@]}; do
+	checkService($UUID)
+    echo ${UUID} ${SERVICES[${UUID}]}
 done
 
 # # redundancy here
