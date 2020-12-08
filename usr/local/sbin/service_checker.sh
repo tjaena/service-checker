@@ -13,7 +13,7 @@ SERVICES["add your hc-ping id here!"]="<service-url>"
 
 # if the url is reachable, then it returns a error code of 0 (OK)
 checkService() {
-	HTTP_RESPONSE=$(curl -fsS --retry 5 --write-out %{http_code} --output /dev/null $1)
+	HTTP_RESPONSE=$(curl -fsSk --retry 5 --write-out %{http_code} --output /dev/null $1)
 
 	if [ "$HTTP_RESPONSE" == "200" ]; then
 		# 0 = true
